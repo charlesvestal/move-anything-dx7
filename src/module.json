@@ -3,7 +3,7 @@
   "name": "DX7 Synth",
   "version": "0.1.0",
   "description": "Yamaha DX7 FM synthesizer emulator (Dexed/MSFA)",
-  "author": "google/asb2m10",
+  "author": "Dexed/MSFA by google/asb2m10",
   "license": "Apache-2.0",
   "ui": "ui.js",
   "dsp": "dsp.so",
