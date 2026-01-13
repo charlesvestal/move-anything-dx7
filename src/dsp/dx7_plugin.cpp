@@ -13,7 +13,36 @@
 
 /* Include plugin API */
 extern "C" {
-#include "../../../host/plugin_api_v1.h"
+/* Copy plugin_api_v1.h definitions inline to avoid path issues */
+#include <stdint.h>
+
+#define MOVE_PLUGIN_API_VERSION 1
+#define MOVE_SAMPLE_RATE 44100
+#define MOVE_FRAMES_PER_BLOCK 128
+#define MOVE_MIDI_SOURCE_INTERNAL 0
+#define MOVE_MIDI_SOURCE_EXTERNAL 2
+
+typedef struct host_api_v1 {
+    uint32_t api_version;
+    int sample_rate;
+    int frames_per_block;
+    uint8_t *mapped_memory;
+    int audio_out_offset;
+    int audio_in_offset;
+    void (*log)(const char *msg);
+    int (*midi_send_internal)(const uint8_t *msg, int len);
+    int (*midi_send_external)(const uint8_t *msg, int len);
+} host_api_v1_t;
+
+typedef struct plugin_api_v1 {
+    uint32_t api_version;
+    int (*on_load)(const char *module_dir, const char *json_defaults);
+    void (*on_unload)(void);
+    void (*on_midi)(const uint8_t *msg, int len, int source);
+    void (*set_param)(const char *key, const char *val);
+    int (*get_param)(const char *key, char *buf, int buf_len);
+    void (*render_block)(int16_t *out_interleaved_lr, int frames);
+} plugin_api_v1_t;
 }
 
 /* msfa FM engine */
