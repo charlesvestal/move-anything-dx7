@@ -1,0 +1,31 @@
+#!/bin/bash
+# Install DX7 module to Move
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+cd "$REPO_ROOT"
+
+if [ ! -d "dist/dx7" ]; then
+    echo "Error: dist/dx7 not found. Run ./scripts/build.sh first."
+    exit 1
+fi
+
+echo "=== Installing DX7 Module ==="
+
+# Deploy to Move
+echo "Copying module to Move..."
+scp -r dist/dx7 ableton@move.local:/data/UserData/move-anything/modules/
+
+# Install chain presets if they exist
+if [ -d "src/chain_patches" ]; then
+    echo "Installing chain presets..."
+    scp src/chain_patches/*.json ableton@move.local:/data/UserData/move-anything/modules/chain/patches/
+fi
+
+echo ""
+echo "=== Install Complete ==="
+echo "Module installed to: /data/UserData/move-anything/modules/dx7/"
+echo ""
+echo "Restart Move Anything to load the new module."
