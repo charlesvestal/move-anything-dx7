@@ -72,9 +72,15 @@ cat src/ui.js > dist/dx7/ui.js
 cat build/dsp.so > dist/dx7/dsp.so
 chmod +x dist/dx7/dsp.so
 
+# Create tarball for release
+cd dist
+tar -czvf dx7-module.tar.gz dx7/
+cd ..
+
 echo ""
 echo "=== Build Complete ==="
 echo "Output: dist/dx7/"
+echo "Tarball: dist/dx7-module.tar.gz"
 echo ""
 echo "To install on Move:"
 echo "  ./scripts/install.sh"
