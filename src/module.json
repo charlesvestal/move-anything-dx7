@@ -1,6 +1,7 @@
 {
   "id": "dx7",
   "name": "DX7 Synth",
+  "abbrev": "DX",
   "version": "0.1.2",
   "description": "Yamaha DX7 FM synthesizer emulator (Dexed/MSFA)",
   "author": "Dexed/MSFA by google/asb2m10 (port: charlesvestal)",
@@ -23,6 +24,22 @@
         "type": "int",
         "min": 0,
         "max_param": "preset_count",
+        "default": 0
+      },
+      {
+        "key": "output_level",
+        "name": "Output Level",
+        "type": "int",
+        "min": 0,
+        "max": 100,
+        "default": 50
+      },
+      {
+        "key": "octave_transpose",
+        "name": "Octave",
+        "type": "int",
+        "min": -3,
+        "max": 3,
         "default": 0
       }
     ]

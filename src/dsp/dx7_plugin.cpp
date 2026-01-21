@@ -672,6 +672,55 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         /* DX7 loads one syx file at a time */
         return snprintf(buf, buf_len, "1");
     }
+    /* UI hierarchy for shadow parameter editor */
+    if (strcmp(key, "ui_hierarchy") == 0) {
+        const char *hierarchy = "{"
+            "\"modes\":null,"
+            "\"levels\":{"
+                "\"root\":{"
+                    "\"list_param\":\"preset\","
+                    "\"count_param\":\"preset_count\","
+                    "\"name_param\":\"preset_name\","
+                    "\"children\":\"params\","
+                    "\"knobs\":[],"
+                    "\"params\":[]"
+                "},"
+                "\"params\":{"
+                    "\"children\":null,"
+                    "\"knobs\":[\"output_level\",\"octave_transpose\"],"
+                    "\"params\":[\"output_level\",\"octave_transpose\"]"
+                "}"
+            "}"
+        "}";
+        int len = strlen(hierarchy);
+        if (len < buf_len) {
+            strcpy(buf, hierarchy);
+            return len;
+        }
+        return -1;
+    }
+    /* Output level for get_param */
+    if (strcmp(key, "output_level") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->output_level);
+    }
+    /* Octave transpose for get_param */
+    if (strcmp(key, "octave_transpose") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->octave_transpose);
+    }
+    /* Chain params metadata for shadow UI */
+    if (strcmp(key, "chain_params") == 0) {
+        const char *params_json = "["
+            "{\"key\":\"preset\",\"name\":\"Preset\",\"type\":\"int\",\"min\":0,\"max\":9999},"
+            "{\"key\":\"output_level\",\"name\":\"Output Level\",\"type\":\"int\",\"min\":0,\"max\":100},"
+            "{\"key\":\"octave_transpose\",\"name\":\"Octave\",\"type\":\"int\",\"min\":-3,\"max\":3}"
+        "]";
+        int len = strlen(params_json);
+        if (len < buf_len) {
+            strcpy(buf, params_json);
+            return len;
+        }
+        return -1;
+    }
 
     return -1;
 }
