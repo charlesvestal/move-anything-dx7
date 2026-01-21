@@ -4,7 +4,8 @@
  * Uses shared sound generator UI base with custom algorithm display.
  */
 
-import { createSoundGeneratorUI } from '../../shared/sound_generator_ui.mjs';
+/* Shared utilities - absolute path for module location independence */
+import { createSoundGeneratorUI } from '/data/UserData/move-anything/shared/sound_generator_ui.mjs';
 
 /* Algorithm state */
 let algorithm = 1;
