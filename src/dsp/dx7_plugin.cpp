@@ -199,6 +199,9 @@ typedef struct {
 
     /* Render buffer */
     int32_t render_buffer[N];
+
+    /* Load error state */
+    char load_error[256];
 } dx7_instance_t;
 
 /* v2: Initialize default patch */
@@ -447,14 +450,26 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
         }
     }
 
+    /* Initialize load error */
+    inst->load_error[0] = '\0';
+
     /* Load syx file */
+    int syx_result = -1;
     if (syx_path[0]) {
-        v2_load_syx(inst, syx_path);
+        syx_result = v2_load_syx(inst, syx_path);
+        if (syx_result != 0) {
+            snprintf(inst->load_error, sizeof(inst->load_error),
+                     "DX7: patches.syx not found");
+        }
     } else {
         /* Try default patches.syx in module dir */
         char default_syx[512];
         snprintf(default_syx, sizeof(default_syx), "%s/patches.syx", module_dir);
-        v2_load_syx(inst, default_syx);
+        syx_result = v2_load_syx(inst, default_syx);
+        if (syx_result != 0) {
+            snprintf(inst->load_error, sizeof(inst->load_error),
+                     "DX7: patches.syx not found");
+        }
     }
 
     /* Select first preset if we have patches */
@@ -627,6 +642,12 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
     dx7_instance_t *inst = (dx7_instance_t*)instance;
     if (!inst) return -1;
 
+    if (strcmp(key, "load_error") == 0) {
+        if (inst->load_error[0]) {
+            return snprintf(buf, buf_len, "%s", inst->load_error);
+        }
+        return 0;  /* No error */
+    }
     if (strcmp(key, "preset_name") == 0 || strcmp(key, "patch_name") == 0 || strcmp(key, "name") == 0) {
         return snprintf(buf, buf_len, "%s", inst->patch_name);
     }
