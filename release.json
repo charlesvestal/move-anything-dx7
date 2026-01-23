@@ -1,4 +1,9 @@
 {
   "version": "0.3.0",
-  "download_url": "https://github.com/charlesvestal/move-anything-dx7/releases/download/v0.3.0/dx7-module.tar.gz"
+  "download_url": "https://github.com/charlesvestal/move-anything-dx7/releases/download/v0.3.0/dx7-module.tar.gz",
+  "name": "DX7",
+  "description": "Yamaha DX7 FM synthesizer emulation using the Dexed/MSFA engine. Provides authentic 6-operator FM synthesis with support for original DX7 patches in .syx format.",
+  "requires": "DX7 patch files (.syx format)",
+  "post_install": "Requires .syx patch files. Copy patches.syx to the module directory.",
+  "repo_url": "https://github.com/charlesvestal/move-anything-dx7"
 }
