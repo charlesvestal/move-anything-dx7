@@ -747,11 +747,12 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
     return -1;
 }
 
-/* v2: Get error - returns error message if module is in error state */
+/* v2: Get error message */
 static int v2_get_error(void *instance, char *buf, int buf_len) {
     dx7_instance_t *inst = (dx7_instance_t*)instance;
-    if (!inst || !inst->load_error[0]) return 0;  /* No error */
-
+    if (!inst || !inst->load_error[0]) {
+        return 0;  /* No error */
+    }
     int len = strlen(inst->load_error);
     if (len >= buf_len) len = buf_len - 1;
     memcpy(buf, inst->load_error, len);
