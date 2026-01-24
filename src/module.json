@@ -1,9 +1,9 @@
 {
-  "id": "dx7",
-  "name": "DX7 Synth",
+  "id": "dexed",
+  "name": "Dexed",
   "abbrev": "DX",
   "version": "0.3.1",
-  "description": "Yamaha DX7 FM synthesizer emulator (Dexed/MSFA)",
+  "description": "6-operator FM synthesizer (Dexed/MSFA) with .syx patch support",
   "author": "Dexed/MSFA by google/asb2m10 (port: charlesvestal)",
   "license": "GPL-3.0",
   "ui": "ui.js",
@@ -45,7 +45,7 @@
     ]
   },
   "defaults": {
-    "syx_path": "/data/UserData/move-anything/modules/sound_generators/dx7/patches.syx",
+    "syx_path": "/data/UserData/move-anything/modules/sound_generators/dexed/patches.syx",
     "preset": 0
   }
 }
