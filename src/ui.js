@@ -1,5 +1,5 @@
 /*
- * DX7 Synth Module UI
+ * Dexed Module UI
  *
  * Uses shared sound generator UI base with custom algorithm display.
  */
@@ -10,9 +10,9 @@ import { createSoundGeneratorUI } from '/data/UserData/move-anything/shared/soun
 /* Algorithm state */
 let algorithm = 1;
 
-/* Create the UI with DX7-specific customizations */
+/* Create the UI with Dexed-specific customizations */
 const ui = createSoundGeneratorUI({
-    moduleName: 'DX7',
+    moduleName: 'Dexed',
 
     onInit: (state) => {
         /* Get initial algorithm from DSP */
@@ -39,7 +39,7 @@ const ui = createSoundGeneratorUI({
     },
 
     onPresetChange: (preset) => {
-        /* Use panic for full reset on preset change (DX7 specific) */
+        /* Use panic for full reset on preset change (Dexed-specific) */
         host_module_set_param('panic', '1');
 
         /* Update algorithm after preset change */

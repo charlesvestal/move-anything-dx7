@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-DX7 FM synthesizer module for Move Anything. Uses MSFA (Music Synthesizer for Android) engine.
+Dexed FM synthesizer module for Move Anything. Uses the MSFA (Music Synthesizer for Android) engine.
 
 ## Build Commands
 

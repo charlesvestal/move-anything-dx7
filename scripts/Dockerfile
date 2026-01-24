@@ -1,4 +1,4 @@
-# DX7 Module Build Environment
+# Dexed Module Build Environment
 # Targets: Ableton Move (aarch64 Linux)
 
 FROM debian:bookworm

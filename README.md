@@ -1,11 +1,11 @@
-# DX7 Module for Move Anything
+# Dexed Module for Move Anything
 
-Yamaha DX7 FM synthesizer emulator for Ableton Move, using the MSFA engine from Dexed.
+Dexed FM synthesizer module for Ableton Move, using the MSFA engine from Dexed.
 
 ## Features
 
 - Full 6-operator FM synthesis
-- All 32 DX7 algorithms
+- All 32 classic 6-operator FM algorithms
 - Loads standard .syx patch banks (32 voices per bank)
 - 16-voice polyphony with voice stealing
 - Velocity sensitivity and aftertouch modulation
@@ -24,7 +24,7 @@ Yamaha DX7 FM synthesizer emulator for Ableton Move, using the MSFA engine from 
 
 1. Launch Move Anything on your Move
 2. Select **Module Store** from the main menu
-3. Navigate to **Sound Generators** → **DX7**
+3. Navigate to **Sound Generators** → **Dexed**
 4. Select **Install**
 
 ### Manual Installation
@@ -35,20 +35,20 @@ Yamaha DX7 FM synthesizer emulator for Ableton Move, using the MSFA engine from 
 
 ## Loading Patches
 
-The DX7 loads `patches.syx` from its module directory on startup.
+Dexed loads `patches.syx` from its module directory on startup.
 
 ### Quick Setup
 
-1. Download a DX7 .syx bank (see "Finding Patches" below)
+1. Download a DX7-compatible .syx bank (see "Finding Patches" below)
 2. Copy to Move:
    ```bash
-   scp your-patches.syx ableton@move.local:/data/UserData/move-anything/modules/dx7/patches.syx
+   scp your-patches.syx ableton@move.local:/data/UserData/move-anything/modules/dexed/patches.syx
    ```
-3. Restart the DX7 module to load the new bank
+3. Restart the Dexed module to load the new bank
 
 ### Patch File Format
 
-The module expects standard DX7 32-voice bank sysex files:
+The module expects standard DX7-compatible 32-voice bank sysex files:
 - 4104 bytes total (with sysex headers)
 - 4096 bytes of patch data (32 patches x 128 bytes)
 - Standard VMEM packed format
@@ -92,15 +92,15 @@ Classic banks include:
 ## Troubleshooting
 
 **No sound:**
-- Ensure a .syx file is loaded at `modules/dx7/patches.syx`
+- Ensure a .syx file is loaded at `modules/dexed/patches.syx`
 - The default "Init" patch is very quiet - try changing presets
 
 **Clipping with chords:**
-- The DX7 can be loud with multiple voices
+- Dexed can be loud with multiple voices
 - Use in Signal Chain with lower mix settings
 
 **Wrong pitch:**
-- Ensure you're using standard DX7 .syx files (not TX81Z or other FM synths)
+- Ensure you're using standard DX7-compatible .syx files (not TX81Z or other FM synths)
 
 ## Building from Source
 
