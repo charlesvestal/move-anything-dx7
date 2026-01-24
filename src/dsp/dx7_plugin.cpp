@@ -1,8 +1,8 @@
 /*
- * DX7 Synth DSP Plugin
+ * Dexed Synth DSP Plugin
  *
  * Uses msfa (Music Synthesizer for Android) FM engine from Dexed.
- * Provides 6-operator FM synthesis with DX7 patch compatibility.
+ * Provides 6-operator FM synthesis with DX7-compatible patch support.
  *
  * V2 API only - instance-based for multi-instance support.
  */
@@ -77,7 +77,7 @@ static const host_api_v1_t *g_host = NULL;
 static void plugin_log(const char *msg) {
     if (g_host && g_host->log) {
         char buf[256];
-        snprintf(buf, sizeof(buf), "[dx7] %s", msg);
+        snprintf(buf, sizeof(buf), "[dexed] %s", msg);
         g_host->log(buf);
     }
 }
@@ -350,7 +350,7 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
 
     dx7_instance_t *inst = new dx7_instance_t();
     if (!inst) {
-        fprintf(stderr, "DX7: Failed to allocate instance\n");
+        fprintf(stderr, "Dexed: Failed to allocate instance\n");
         return NULL;
     }
 
@@ -460,7 +460,7 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
         syx_result = v2_load_syx(inst, syx_path);
         if (syx_result != 0) {
             snprintf(inst->load_error, sizeof(inst->load_error),
-                     "DX7: patches.syx not found");
+                     "Dexed: patches.syx not found");
         }
     } else {
         /* Try default patches.syx in module dir */
@@ -469,7 +469,7 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
         syx_result = v2_load_syx(inst, default_syx);
         if (syx_result != 0) {
             snprintf(inst->load_error, sizeof(inst->load_error),
-                     "DX7: patches.syx not found");
+                     "Dexed: patches.syx not found");
         }
     }
 
@@ -684,7 +684,7 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         if (ext && (strcmp(ext, ".syx") == 0 || strcmp(ext, ".SYX") == 0)) {
             *ext = '\0';
         }
-        return snprintf(buf, buf_len, "%s", name[0] ? name : "DX7");
+        return snprintf(buf, buf_len, "%s", name[0] ? name : "Dexed");
     }
     if (strcmp(key, "patch_in_bank") == 0) {
         /* 1-indexed position within the 32-patch syx bank */
