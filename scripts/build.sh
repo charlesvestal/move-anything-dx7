@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build DX7 module for Move Anything (ARM64)
+# Build Dexed module for Move Anything (ARM64)
 #
 # Automatically uses Docker for cross-compilation if needed.
 # Set CROSS_PREFIX to skip Docker (e.g., for native ARM builds).
@@ -11,7 +11,7 @@ IMAGE_NAME="move-anything-builder"
 
 # Check if we need Docker
 if [ -z "$CROSS_PREFIX" ] && [ ! -f "/.dockerenv" ]; then
-    echo "=== DX7 Module Build (via Docker) ==="
+    echo "=== Dexed Module Build (via Docker) ==="
     echo ""
 
     # Build Docker image if needed
@@ -40,12 +40,12 @@ CROSS_PREFIX="${CROSS_PREFIX:-aarch64-linux-gnu-}"
 
 cd "$REPO_ROOT"
 
-echo "=== Building DX7 Module ==="
+echo "=== Building Dexed Module ==="
 echo "Cross prefix: $CROSS_PREFIX"
 
 # Create build directories
 mkdir -p build
-mkdir -p dist/dx7
+mkdir -p dist/dexed
 
 # Compile DSP plugin
 echo "Compiling DSP plugin..."
@@ -67,20 +67,20 @@ ${CROSS_PREFIX}g++ -g -O3 -shared -fPIC -std=c++14 \
 
 # Copy files to dist (use cat to avoid ExtFS deallocation issues with Docker)
 echo "Packaging..."
-cat src/module.json > dist/dx7/module.json
-cat src/ui.js > dist/dx7/ui.js
-cat build/dsp.so > dist/dx7/dsp.so
-chmod +x dist/dx7/dsp.so
+cat src/module.json > dist/dexed/module.json
+cat src/ui.js > dist/dexed/ui.js
+cat build/dsp.so > dist/dexed/dsp.so
+chmod +x dist/dexed/dsp.so
 
 # Create tarball for release
 cd dist
-tar -czvf dx7-module.tar.gz dx7/
+tar -czvf dexed-module.tar.gz dexed/
 cd ..
 
 echo ""
 echo "=== Build Complete ==="
-echo "Output: dist/dx7/"
-echo "Tarball: dist/dx7-module.tar.gz"
+echo "Output: dist/dexed/"
+echo "Tarball: dist/dexed-module.tar.gz"
 echo ""
 echo "To install on Move:"
 echo "  ./scripts/install.sh"
