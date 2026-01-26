@@ -600,10 +600,50 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
     }
 }
 
+/* Helper to extract a JSON number value by key */
+static int json_get_number(const char *json, const char *key, float *out) {
+    char search[64];
+    snprintf(search, sizeof(search), "\"%s\":", key);
+    const char *pos = strstr(json, search);
+    if (!pos) return -1;
+    pos += strlen(search);
+    while (*pos == ' ') pos++;
+    *out = (float)atof(pos);
+    return 0;
+}
+
 /* v2: Set parameter */
 static void v2_set_param(void *instance, const char *key, const char *val) {
     dx7_instance_t *inst = (dx7_instance_t*)instance;
     if (!inst) return;
+
+    /* State restore from patch save */
+    if (strcmp(key, "state") == 0) {
+        float fval;
+
+        /* Restore preset first */
+        if (json_get_number(val, "preset", &fval) == 0) {
+            int idx = (int)fval;
+            if (idx >= 0 && idx < inst->preset_count) {
+                v2_select_preset(inst, idx);
+            }
+        }
+
+        /* Restore octave transpose */
+        if (json_get_number(val, "octave_transpose", &fval) == 0) {
+            inst->octave_transpose = (int)fval;
+            if (inst->octave_transpose < -3) inst->octave_transpose = -3;
+            if (inst->octave_transpose > 3) inst->octave_transpose = 3;
+        }
+
+        /* Restore output level */
+        if (json_get_number(val, "output_level", &fval) == 0) {
+            inst->output_level = (int)fval;
+            if (inst->output_level < 0) inst->output_level = 0;
+            if (inst->output_level > 100) inst->output_level = 100;
+        }
+        return;
+    }
 
     if (strcmp(key, "syx_path") == 0) {
         v2_load_syx(inst, val);
@@ -742,6 +782,12 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
             return len;
         }
         return -1;
+    }
+    /* State serialization for patch save/load */
+    if (strcmp(key, "state") == 0) {
+        return snprintf(buf, buf_len,
+            "{\"preset\":%d,\"octave_transpose\":%d,\"output_level\":%d}",
+            inst->current_preset, inst->octave_transpose, inst->output_level);
     }
 
     return -1;
