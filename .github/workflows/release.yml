@@ -26,7 +26,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/dx7-module.tar.gz
+          files: dist/dexed-module.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,7 +46,7 @@ jobs:
             cat > release.json << EOF
           {
             "version": "${VERSION}",
-            "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/dx7-module.tar.gz",
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/dexed-module.tar.gz",
             "install_path": "${INSTALL_PATH}"
           }
           EOF
@@ -54,7 +54,7 @@ jobs:
             cat > release.json << EOF
           {
             "version": "${VERSION}",
-            "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/dx7-module.tar.gz"
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/dexed-module.tar.gz"
           }
           EOF
           fi
