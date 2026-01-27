@@ -19,6 +19,10 @@ echo "Copying module to Move..."
 ssh ableton@move.local "mkdir -p /data/UserData/move-anything/modules/sound_generators/dexed"
 scp -r dist/dexed/* ableton@move.local:/data/UserData/move-anything/modules/sound_generators/dexed/
 
+# Create banks directory for user .syx files
+echo "Creating banks directory..."
+ssh ableton@move.local "mkdir -p /data/UserData/move-anything/modules/sound_generators/dexed/banks"
+
 # Install chain presets if they exist
 if [ -d "src/chain_patches" ]; then
     echo "Installing chain presets..."
