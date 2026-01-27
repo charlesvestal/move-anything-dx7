@@ -2,7 +2,7 @@
   "id": "dexed",
   "name": "Dexed",
   "abbrev": "DX",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "6-operator FM synthesizer (Dexed/MSFA) with .syx patch support",
   "author": "Dexed/MSFA by google/asb2m10 (port: charlesvestal)",
   "license": "GPL-3.0",
@@ -23,12 +23,12 @@
         "name": "Preset",
         "type": "int",
         "min": 0,
-        "max_param": "preset_count",
+        "max": 31,
         "default": 0
       },
       {
         "key": "output_level",
-        "name": "Output Level",
+        "name": "Output",
         "type": "int",
         "min": 0,
         "max": 100,
@@ -41,11 +41,90 @@
         "min": -3,
         "max": 3,
         "default": 0
+      },
+      {
+        "key": "feedback",
+        "name": "Feedback",
+        "type": "int",
+        "min": 0,
+        "max": 7,
+        "default": 0
+      },
+      {
+        "key": "lfo_speed",
+        "name": "LFO Spd",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 35
+      },
+      {
+        "key": "lfo_pmd",
+        "name": "LFO PMD",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "lfo_amd",
+        "name": "LFO AMD",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op1_level",
+        "name": "Op1 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op2_level",
+        "name": "Op2 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op3_level",
+        "name": "Op3 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op4_level",
+        "name": "Op4 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op5_level",
+        "name": "Op5 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
+      },
+      {
+        "key": "op6_level",
+        "name": "Op6 Lvl",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
       }
     ]
   },
   "defaults": {
-    "syx_path": "/data/UserData/move-anything/modules/sound_generators/dexed/patches.syx",
     "preset": 0
   }
 }

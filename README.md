@@ -35,16 +35,17 @@ Dexed FM synthesizer module for Ableton Move, using the MSFA engine from Dexed.
 
 ## Loading Patches
 
-Dexed loads `patches.syx` from its module directory on startup.
+Dexed scans the `banks/` folder in its module directory for .syx files on startup.
 
 ### Quick Setup
 
-1. Download a DX7-compatible .syx bank (see "Finding Patches" below)
-2. Copy to Move:
+1. Download DX7-compatible .syx banks (see "Finding Patches" below)
+2. Copy to Move's banks folder:
    ```bash
-   scp your-patches.syx ableton@move.local:/data/UserData/move-anything/modules/dexed/patches.syx
+   scp *.syx ableton@move.local:/data/UserData/move-anything/modules/sound_generators/dexed/banks/
    ```
-3. Restart the Dexed module to load the new bank
+3. Restart Move Anything to load the new banks
+4. Use "Choose Bank" in the Shadow UI to switch between banks
 
 ### Patch File Format
 
@@ -54,6 +55,10 @@ The module expects standard DX7-compatible 32-voice bank sysex files:
 - Standard VMEM packed format
 
 Single-voice VCED dumps are not supported.
+
+### Legacy Support
+
+If no `banks/` folder exists or is empty, Dexed falls back to loading `patches.syx` from the module directory.
 
 ## Controls
 
@@ -76,6 +81,28 @@ Single-voice VCED dumps are not supported.
 | Mod Wheel (CC 1) | LFO pitch/amplitude modulation |
 | Aftertouch | Pitch/amplitude modulation |
 | Sustain (CC 64) | Hold notes |
+
+## Parameters
+
+In Shadow UI, parameters are organized into navigable categories:
+
+### Global
+- `output_level` (0-100) - Output volume
+- `octave_transpose` (-3 to +3) - Octave shift
+- `algorithm` (1-32) - FM algorithm (read-only, displays current patch algorithm)
+- `feedback` (0-7) - Operator 6 feedback amount
+
+### LFO
+- `lfo_speed` (0-99) - LFO rate
+- `lfo_delay` (0-99) - LFO delay before onset
+- `lfo_pmd` (0-99) - Pitch modulation depth
+- `lfo_amd` (0-99) - Amplitude modulation depth
+- `lfo_wave` (0-5) - Waveform (sine, tri, saw up, saw down, square, S&H)
+
+### Operators
+- `op1_level` through `op6_level` (0-99) - Individual operator output levels
+
+These parameters modify the current patch in real-time. Changes are saved with your Move Anything patches.
 
 ## Finding Patches
 
