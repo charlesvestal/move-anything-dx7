@@ -206,7 +206,33 @@ typedef struct {
     int op_eg_r2[6];    /* Editable (0-99) EG rate 2 (decay 1) */
     int op_eg_r3[6];    /* Editable (0-99) EG rate 3 (decay 2) */
     int op_eg_r4[6];    /* Editable (0-99) EG rate 4 (release) */
+    int op_eg_l1[6];    /* Editable (0-99) EG level 1 */
+    int op_eg_l2[6];    /* Editable (0-99) EG level 2 */
+    int op_eg_l3[6];    /* Editable (0-99) EG level 3 (sustain) */
+    int op_eg_l4[6];    /* Editable (0-99) EG level 4 */
     int op_vel_sens[6]; /* Editable (0-7) velocity sensitivity */
+    int op_amp_mod[6];  /* Editable (0-3) amp mod sensitivity */
+    int op_osc_mode[6]; /* Editable (0-1) 0=ratio, 1=fixed */
+    int op_rate_scale[6]; /* Editable (0-7) rate scaling */
+    int op_key_bp[6];   /* Editable (0-99) keyboard breakpoint */
+    int op_key_ld[6];   /* Editable (0-99) left depth */
+    int op_key_rd[6];   /* Editable (0-99) right depth */
+    int op_key_lc[6];   /* Editable (0-3) left curve */
+    int op_key_rc[6];   /* Editable (0-3) right curve */
+
+    /* Global parameters */
+    int pitch_eg_r1;    /* Editable (0-99) pitch EG rate 1 */
+    int pitch_eg_r2;    /* Editable (0-99) pitch EG rate 2 */
+    int pitch_eg_r3;    /* Editable (0-99) pitch EG rate 3 */
+    int pitch_eg_r4;    /* Editable (0-99) pitch EG rate 4 */
+    int pitch_eg_l1;    /* Editable (0-99) pitch EG level 1 */
+    int pitch_eg_l2;    /* Editable (0-99) pitch EG level 2 */
+    int pitch_eg_l3;    /* Editable (0-99) pitch EG level 3 */
+    int pitch_eg_l4;    /* Editable (0-99) pitch EG level 4 */
+    int osc_sync;       /* Editable (0-1) oscillator sync */
+    int lfo_sync;       /* Editable (0-1) LFO key sync */
+    int lfo_pms;        /* Editable (0-7) LFO pitch mod sensitivity */
+    int transpose;      /* Editable (0-48) transpose, 24=middle C */
 
     /* Tuning */
     std::shared_ptr<TuningState> tuning;
@@ -221,6 +247,7 @@ typedef struct {
     /* Voices */
     Dx7Note* voices[MAX_VOICES];
     int voice_note[MAX_VOICES];
+    int voice_velocity[MAX_VOICES];
     int voice_age[MAX_VOICES];
     bool voice_sustained[MAX_VOICES];
     int age_counter;
@@ -242,7 +269,8 @@ typedef struct {
 static void v2_init_default_patch(dx7_instance_t *inst) {
     memset(inst->current_patch, 0, DX7_PATCH_SIZE);
 
-    /* Set up a simple init patch - operator 6 only with a sine wave */
+    /* Set up a simple init patch - OP1 (carrier in algorithm 1) with a sine wave
+     * Note: DX7 sysex has OP6 at byte 0, OP1 at byte 105. Here op=5 means OP1. */
     for (int op = 0; op < 6; op++) {
         int base = op * 21;
         /* EG rates */
@@ -255,9 +283,10 @@ static void v2_init_default_patch(dx7_instance_t *inst) {
         inst->current_patch[base + 5] = 99;  /* L2 */
         inst->current_patch[base + 6] = 99;  /* L3 */
         inst->current_patch[base + 7] = 0;   /* L4 */
-        /* Other params */
-        inst->current_patch[base + 17] = (op == 5) ? 99 : 0;  /* Output level - only op6 on */
-        inst->current_patch[base + 20] = 1;  /* Oscillator mode = ratio */
+        /* Other params - byte offsets: 16=level, 17=osc_mode, 20=detune */
+        inst->current_patch[base + 16] = (op == 5) ? 99 : 0;  /* Output level - only op6 on */
+        inst->current_patch[base + 17] = 0;  /* Oscillator mode = ratio */
+        inst->current_patch[base + 20] = 7;  /* Detune = 0 (stored as 7, displayed as 0) */
     }
 
     /* Algorithm = 1 */
@@ -386,13 +415,28 @@ static void set_syx_bank_index(dx7_instance_t *inst, int index);
 
 /* Extract DX7 parameters from current patch to instance fields */
 static void extract_patch_params(dx7_instance_t *inst) {
+    /* Global parameters */
     inst->algorithm = inst->current_patch[134];  /* 0-31 */
     inst->feedback = inst->current_patch[135];   /* 0-7 */
+    inst->osc_sync = inst->current_patch[136];   /* 0-1 */
     inst->lfo_speed = inst->current_patch[137];  /* 0-99 */
     inst->lfo_delay = inst->current_patch[138];  /* 0-99 */
     inst->lfo_pmd = inst->current_patch[139];    /* 0-99 */
     inst->lfo_amd = inst->current_patch[140];    /* 0-99 */
+    inst->lfo_sync = inst->current_patch[141];   /* 0-1 */
     inst->lfo_wave = inst->current_patch[142];   /* 0-5 */
+    inst->lfo_pms = inst->current_patch[143];    /* 0-7 */
+    inst->transpose = inst->current_patch[144];  /* 0-48 */
+
+    /* Pitch envelope */
+    inst->pitch_eg_r1 = inst->current_patch[126]; /* 0-99 */
+    inst->pitch_eg_r2 = inst->current_patch[127]; /* 0-99 */
+    inst->pitch_eg_r3 = inst->current_patch[128]; /* 0-99 */
+    inst->pitch_eg_r4 = inst->current_patch[129]; /* 0-99 */
+    inst->pitch_eg_l1 = inst->current_patch[130]; /* 0-99 */
+    inst->pitch_eg_l2 = inst->current_patch[131]; /* 0-99 */
+    inst->pitch_eg_l3 = inst->current_patch[132]; /* 0-99 */
+    inst->pitch_eg_l4 = inst->current_patch[133]; /* 0-99 */
 
     /* Per-operator parameters
      * DX7 unpacked patch layout per operator (21 bytes each):
@@ -408,14 +452,33 @@ static void extract_patch_params(dx7_instance_t *inst) {
      *   19:    Freq fine
      *   20:    Detune
      */
+    /* Note: DX7 sysex stores operators in reverse order:
+     * patch bytes 0-20 = OP6, bytes 105-125 = OP1
+     * We use (5-op)*21 so that op1_* maps to actual OP1 data */
     for (int op = 0; op < 6; op++) {
-        int base = op * 21;
+        int base = (5 - op) * 21;
+        /* EG rates */
         inst->op_eg_r1[op] = inst->current_patch[base + 0];
         inst->op_eg_r2[op] = inst->current_patch[base + 1];
         inst->op_eg_r3[op] = inst->current_patch[base + 2];
         inst->op_eg_r4[op] = inst->current_patch[base + 3];
+        /* EG levels */
+        inst->op_eg_l1[op] = inst->current_patch[base + 4];
+        inst->op_eg_l2[op] = inst->current_patch[base + 5];
+        inst->op_eg_l3[op] = inst->current_patch[base + 6];
+        inst->op_eg_l4[op] = inst->current_patch[base + 7];
+        /* Keyboard scaling */
+        inst->op_key_bp[op] = inst->current_patch[base + 8];
+        inst->op_key_ld[op] = inst->current_patch[base + 9];
+        inst->op_key_rd[op] = inst->current_patch[base + 10];
+        inst->op_key_lc[op] = inst->current_patch[base + 11];
+        inst->op_key_rc[op] = inst->current_patch[base + 12];
+        /* Other */
+        inst->op_rate_scale[op] = inst->current_patch[base + 13];
+        inst->op_amp_mod[op] = inst->current_patch[base + 14];
         inst->op_vel_sens[op] = inst->current_patch[base + 15];
         inst->op_levels[op] = inst->current_patch[base + 16];
+        inst->op_osc_mode[op] = inst->current_patch[base + 17];
         inst->op_coarse[op] = inst->current_patch[base + 18];
         inst->op_fine[op] = inst->current_patch[base + 19];
         inst->op_detune[op] = inst->current_patch[base + 20];
@@ -427,21 +490,51 @@ static void apply_patch_params(dx7_instance_t *inst) {
     /* Apply global params */
     inst->current_patch[134] = inst->algorithm;
     inst->current_patch[135] = inst->feedback;
+    inst->current_patch[136] = inst->osc_sync;
     inst->current_patch[137] = inst->lfo_speed;
     inst->current_patch[138] = inst->lfo_delay;
     inst->current_patch[139] = inst->lfo_pmd;
     inst->current_patch[140] = inst->lfo_amd;
+    inst->current_patch[141] = inst->lfo_sync;
     inst->current_patch[142] = inst->lfo_wave;
+    inst->current_patch[143] = inst->lfo_pms;
+    inst->current_patch[144] = inst->transpose;
 
-    /* Apply per-operator params */
+    /* Apply pitch envelope */
+    inst->current_patch[126] = inst->pitch_eg_r1;
+    inst->current_patch[127] = inst->pitch_eg_r2;
+    inst->current_patch[128] = inst->pitch_eg_r3;
+    inst->current_patch[129] = inst->pitch_eg_r4;
+    inst->current_patch[130] = inst->pitch_eg_l1;
+    inst->current_patch[131] = inst->pitch_eg_l2;
+    inst->current_patch[132] = inst->pitch_eg_l3;
+    inst->current_patch[133] = inst->pitch_eg_l4;
+
+    /* Apply per-operator params - use (5-op)*21 to match extract_patch_params */
     for (int op = 0; op < 6; op++) {
-        int base = op * 21;
+        int base = (5 - op) * 21;
+        /* EG rates */
         inst->current_patch[base + 0] = inst->op_eg_r1[op];
         inst->current_patch[base + 1] = inst->op_eg_r2[op];
         inst->current_patch[base + 2] = inst->op_eg_r3[op];
         inst->current_patch[base + 3] = inst->op_eg_r4[op];
+        /* EG levels */
+        inst->current_patch[base + 4] = inst->op_eg_l1[op];
+        inst->current_patch[base + 5] = inst->op_eg_l2[op];
+        inst->current_patch[base + 6] = inst->op_eg_l3[op];
+        inst->current_patch[base + 7] = inst->op_eg_l4[op];
+        /* Keyboard scaling */
+        inst->current_patch[base + 8] = inst->op_key_bp[op];
+        inst->current_patch[base + 9] = inst->op_key_ld[op];
+        inst->current_patch[base + 10] = inst->op_key_rd[op];
+        inst->current_patch[base + 11] = inst->op_key_lc[op];
+        inst->current_patch[base + 12] = inst->op_key_rc[op];
+        /* Other */
+        inst->current_patch[base + 13] = inst->op_rate_scale[op];
+        inst->current_patch[base + 14] = inst->op_amp_mod[op];
         inst->current_patch[base + 15] = inst->op_vel_sens[op];
         inst->current_patch[base + 16] = inst->op_levels[op];
+        inst->current_patch[base + 17] = inst->op_osc_mode[op];
         inst->current_patch[base + 18] = inst->op_coarse[op];
         inst->current_patch[base + 19] = inst->op_fine[op];
         inst->current_patch[base + 20] = inst->op_detune[op];
@@ -450,8 +543,13 @@ static void apply_patch_params(dx7_instance_t *inst) {
     /* Update LFO - changes take effect immediately for LFO params */
     inst->lfo.reset(inst->current_patch + 137);
 
-    /* Note: Playing voices will use updated patch data for new notes.
-     * Some params (LFO) affect currently playing voices via the lfo object. */
+    /* Update all active voices with new patch parameters */
+    for (int i = 0; i < MAX_VOICES; i++) {
+        if (inst->voice_note[i] >= 0 && inst->voices[i]) {
+            inst->voices[i]->update(inst->current_patch, inst->voice_note[i],
+                                    inst->voice_velocity[i], 0);
+        }
+    }
 }
 
 /* v2: Select preset by index */
@@ -543,12 +641,48 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
     /* Initialize DX7 parameters to defaults */
     inst->algorithm = 0;
     inst->feedback = 0;
+    inst->osc_sync = 1;
+    inst->transpose = 24;  /* Middle C */
     inst->lfo_speed = 35;
     inst->lfo_delay = 0;
     inst->lfo_pmd = 0;
     inst->lfo_amd = 0;
     inst->lfo_wave = 0;
-    for (int i = 0; i < 6; i++) inst->op_levels[i] = 0;
+    inst->lfo_sync = 1;
+    inst->lfo_pms = 3;
+    /* Pitch envelope - neutral */
+    inst->pitch_eg_r1 = 99;
+    inst->pitch_eg_r2 = 99;
+    inst->pitch_eg_r3 = 99;
+    inst->pitch_eg_r4 = 99;
+    inst->pitch_eg_l1 = 50;
+    inst->pitch_eg_l2 = 50;
+    inst->pitch_eg_l3 = 50;
+    inst->pitch_eg_l4 = 50;
+    /* Per-operator defaults */
+    for (int i = 0; i < 6; i++) {
+        inst->op_levels[i] = 0;
+        inst->op_coarse[i] = 1;
+        inst->op_fine[i] = 0;
+        inst->op_detune[i] = 7;  /* Center (displayed as 0) */
+        inst->op_eg_r1[i] = 99;
+        inst->op_eg_r2[i] = 99;
+        inst->op_eg_r3[i] = 99;
+        inst->op_eg_r4[i] = 99;
+        inst->op_eg_l1[i] = 99;
+        inst->op_eg_l2[i] = 99;
+        inst->op_eg_l3[i] = 99;
+        inst->op_eg_l4[i] = 0;
+        inst->op_vel_sens[i] = 0;
+        inst->op_amp_mod[i] = 0;
+        inst->op_osc_mode[i] = 0;  /* Ratio */
+        inst->op_rate_scale[i] = 0;
+        inst->op_key_bp[i] = 39;  /* C3 */
+        inst->op_key_ld[i] = 0;
+        inst->op_key_rd[i] = 0;
+        inst->op_key_lc[i] = 0;
+        inst->op_key_rc[i] = 0;
+    }
 
     /* Initialize tuning */
     inst->tuning = std::make_shared<TuningState>();
@@ -596,6 +730,7 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
     /* Initialize tables (global - safe to call multiple times) */
     Exp2::init();
     Sin::init();
+    Lfo::init(MOVE_SAMPLE_RATE);
     Freqlut::init(MOVE_SAMPLE_RATE);
     PitchEnv::init(MOVE_SAMPLE_RATE);
     Env::init_sr(MOVE_SAMPLE_RATE);
@@ -605,6 +740,7 @@ static void* v2_create_instance(const char *module_dir, const char *json_default
     for (int i = 0; i < MAX_VOICES; i++) {
         inst->voices[i] = new Dx7Note(inst->tuning, nullptr);
         inst->voice_note[i] = -1;
+        inst->voice_velocity[i] = 0;
         inst->voice_age[i] = 0;
         inst->voice_sustained[i] = false;
     }
@@ -686,7 +822,8 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
     switch (status) {
         case 0x90: /* Note On */
             if (data2 > 0) {
-                int note = data1 + (inst->octave_transpose * 12);
+                /* Apply octave transpose and DX7 patch transpose (24 = no transpose) */
+                int note = data1 + (inst->octave_transpose * 12) + (inst->transpose - 24);
                 if (note < 0) note = 0;
                 if (note > 127) note = 127;
 
@@ -699,6 +836,7 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
                 int voice = v2_allocate_voice(inst);
                 inst->voices[voice]->init(inst->current_patch, note, data2, 0, &inst->controllers);
                 inst->voice_note[voice] = note;
+                inst->voice_velocity[voice] = data2;
                 inst->voice_age[voice] = inst->age_counter++;
                 inst->voice_sustained[voice] = false;
 
@@ -708,7 +846,7 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
                 }
             } else {
                 /* Note off via velocity 0 */
-                int note = data1 + (inst->octave_transpose * 12);
+                int note = data1 + (inst->octave_transpose * 12) + (inst->transpose - 24);
                 if (note < 0) note = 0;
                 if (note > 127) note = 127;
 
@@ -726,7 +864,7 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
 
         case 0x80: /* Note Off */
             {
-                int note = data1 + (inst->octave_transpose * 12);
+                int note = data1 + (inst->octave_transpose * 12) + (inst->transpose - 24);
                 if (note < 0) note = 0;
                 if (note > 127) note = 127;
 
@@ -859,12 +997,28 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
             if (inst->output_level > 100) inst->output_level = 100;
         }
 
-        /* Restore DX7 parameters */
+        /* Restore DX7 global parameters */
+        if (json_get_number(val, "algorithm", &fval) == 0) {
+            inst->algorithm = (int)fval;
+            if (inst->algorithm < 0) inst->algorithm = 0;
+            if (inst->algorithm > 31) inst->algorithm = 31;
+        }
         if (json_get_number(val, "feedback", &fval) == 0) {
             inst->feedback = (int)fval;
             if (inst->feedback < 0) inst->feedback = 0;
             if (inst->feedback > 7) inst->feedback = 7;
         }
+        if (json_get_number(val, "osc_sync", &fval) == 0) {
+            inst->osc_sync = (int)fval;
+            if (inst->osc_sync < 0) inst->osc_sync = 0;
+            if (inst->osc_sync > 1) inst->osc_sync = 1;
+        }
+        if (json_get_number(val, "transpose", &fval) == 0) {
+            inst->transpose = (int)fval;
+            if (inst->transpose < 0) inst->transpose = 0;
+            if (inst->transpose > 48) inst->transpose = 48;
+        }
+        /* LFO parameters */
         if (json_get_number(val, "lfo_speed", &fval) == 0) {
             inst->lfo_speed = (int)fval;
             if (inst->lfo_speed < 0) inst->lfo_speed = 0;
@@ -890,11 +1044,56 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
             if (inst->lfo_wave < 0) inst->lfo_wave = 0;
             if (inst->lfo_wave > 5) inst->lfo_wave = 5;
         }
-        /* Restore algorithm */
-        if (json_get_number(val, "algorithm", &fval) == 0) {
-            inst->algorithm = (int)fval;
-            if (inst->algorithm < 0) inst->algorithm = 0;
-            if (inst->algorithm > 31) inst->algorithm = 31;
+        if (json_get_number(val, "lfo_sync", &fval) == 0) {
+            inst->lfo_sync = (int)fval;
+            if (inst->lfo_sync < 0) inst->lfo_sync = 0;
+            if (inst->lfo_sync > 1) inst->lfo_sync = 1;
+        }
+        if (json_get_number(val, "lfo_pms", &fval) == 0) {
+            inst->lfo_pms = (int)fval;
+            if (inst->lfo_pms < 0) inst->lfo_pms = 0;
+            if (inst->lfo_pms > 7) inst->lfo_pms = 7;
+        }
+        /* Pitch envelope */
+        if (json_get_number(val, "pitch_eg_r1", &fval) == 0) {
+            inst->pitch_eg_r1 = (int)fval;
+            if (inst->pitch_eg_r1 < 0) inst->pitch_eg_r1 = 0;
+            if (inst->pitch_eg_r1 > 99) inst->pitch_eg_r1 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_r2", &fval) == 0) {
+            inst->pitch_eg_r2 = (int)fval;
+            if (inst->pitch_eg_r2 < 0) inst->pitch_eg_r2 = 0;
+            if (inst->pitch_eg_r2 > 99) inst->pitch_eg_r2 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_r3", &fval) == 0) {
+            inst->pitch_eg_r3 = (int)fval;
+            if (inst->pitch_eg_r3 < 0) inst->pitch_eg_r3 = 0;
+            if (inst->pitch_eg_r3 > 99) inst->pitch_eg_r3 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_r4", &fval) == 0) {
+            inst->pitch_eg_r4 = (int)fval;
+            if (inst->pitch_eg_r4 < 0) inst->pitch_eg_r4 = 0;
+            if (inst->pitch_eg_r4 > 99) inst->pitch_eg_r4 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_l1", &fval) == 0) {
+            inst->pitch_eg_l1 = (int)fval;
+            if (inst->pitch_eg_l1 < 0) inst->pitch_eg_l1 = 0;
+            if (inst->pitch_eg_l1 > 99) inst->pitch_eg_l1 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_l2", &fval) == 0) {
+            inst->pitch_eg_l2 = (int)fval;
+            if (inst->pitch_eg_l2 < 0) inst->pitch_eg_l2 = 0;
+            if (inst->pitch_eg_l2 > 99) inst->pitch_eg_l2 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_l3", &fval) == 0) {
+            inst->pitch_eg_l3 = (int)fval;
+            if (inst->pitch_eg_l3 < 0) inst->pitch_eg_l3 = 0;
+            if (inst->pitch_eg_l3 > 99) inst->pitch_eg_l3 = 99;
+        }
+        if (json_get_number(val, "pitch_eg_l4", &fval) == 0) {
+            inst->pitch_eg_l4 = (int)fval;
+            if (inst->pitch_eg_l4 < 0) inst->pitch_eg_l4 = 0;
+            if (inst->pitch_eg_l4 > 99) inst->pitch_eg_l4 = 99;
         }
 
         /* Restore per-operator params */
@@ -924,6 +1123,13 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
                 if (inst->op_detune[op] < 0) inst->op_detune[op] = 0;
                 if (inst->op_detune[op] > 14) inst->op_detune[op] = 14;
             }
+            snprintf(key_buf, sizeof(key_buf), "op%d_osc_mode", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_osc_mode[op] = (int)fval;
+                if (inst->op_osc_mode[op] < 0) inst->op_osc_mode[op] = 0;
+                if (inst->op_osc_mode[op] > 1) inst->op_osc_mode[op] = 1;
+            }
+            /* EG Rates */
             snprintf(key_buf, sizeof(key_buf), "op%d_eg_r1", op + 1);
             if (json_get_number(val, key_buf, &fval) == 0) {
                 inst->op_eg_r1[op] = (int)fval;
@@ -948,11 +1154,80 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
                 if (inst->op_eg_r4[op] < 0) inst->op_eg_r4[op] = 0;
                 if (inst->op_eg_r4[op] > 99) inst->op_eg_r4[op] = 99;
             }
+            /* EG Levels */
+            snprintf(key_buf, sizeof(key_buf), "op%d_eg_l1", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_eg_l1[op] = (int)fval;
+                if (inst->op_eg_l1[op] < 0) inst->op_eg_l1[op] = 0;
+                if (inst->op_eg_l1[op] > 99) inst->op_eg_l1[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_eg_l2", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_eg_l2[op] = (int)fval;
+                if (inst->op_eg_l2[op] < 0) inst->op_eg_l2[op] = 0;
+                if (inst->op_eg_l2[op] > 99) inst->op_eg_l2[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_eg_l3", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_eg_l3[op] = (int)fval;
+                if (inst->op_eg_l3[op] < 0) inst->op_eg_l3[op] = 0;
+                if (inst->op_eg_l3[op] > 99) inst->op_eg_l3[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_eg_l4", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_eg_l4[op] = (int)fval;
+                if (inst->op_eg_l4[op] < 0) inst->op_eg_l4[op] = 0;
+                if (inst->op_eg_l4[op] > 99) inst->op_eg_l4[op] = 99;
+            }
+            /* Other operator params */
             snprintf(key_buf, sizeof(key_buf), "op%d_vel_sens", op + 1);
             if (json_get_number(val, key_buf, &fval) == 0) {
                 inst->op_vel_sens[op] = (int)fval;
                 if (inst->op_vel_sens[op] < 0) inst->op_vel_sens[op] = 0;
                 if (inst->op_vel_sens[op] > 7) inst->op_vel_sens[op] = 7;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_amp_mod", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_amp_mod[op] = (int)fval;
+                if (inst->op_amp_mod[op] < 0) inst->op_amp_mod[op] = 0;
+                if (inst->op_amp_mod[op] > 3) inst->op_amp_mod[op] = 3;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_rate_scale", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_rate_scale[op] = (int)fval;
+                if (inst->op_rate_scale[op] < 0) inst->op_rate_scale[op] = 0;
+                if (inst->op_rate_scale[op] > 7) inst->op_rate_scale[op] = 7;
+            }
+            /* Keyboard scaling */
+            snprintf(key_buf, sizeof(key_buf), "op%d_key_bp", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_key_bp[op] = (int)fval;
+                if (inst->op_key_bp[op] < 0) inst->op_key_bp[op] = 0;
+                if (inst->op_key_bp[op] > 99) inst->op_key_bp[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_key_ld", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_key_ld[op] = (int)fval;
+                if (inst->op_key_ld[op] < 0) inst->op_key_ld[op] = 0;
+                if (inst->op_key_ld[op] > 99) inst->op_key_ld[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_key_rd", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_key_rd[op] = (int)fval;
+                if (inst->op_key_rd[op] < 0) inst->op_key_rd[op] = 0;
+                if (inst->op_key_rd[op] > 99) inst->op_key_rd[op] = 99;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_key_lc", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_key_lc[op] = (int)fval;
+                if (inst->op_key_lc[op] < 0) inst->op_key_lc[op] = 0;
+                if (inst->op_key_lc[op] > 3) inst->op_key_lc[op] = 3;
+            }
+            snprintf(key_buf, sizeof(key_buf), "op%d_key_rc", op + 1);
+            if (json_get_number(val, key_buf, &fval) == 0) {
+                inst->op_key_rc[op] = (int)fval;
+                if (inst->op_key_rc[op] < 0) inst->op_key_rc[op] = 0;
+                if (inst->op_key_rc[op] > 3) inst->op_key_rc[op] = 3;
             }
         }
 
@@ -1114,6 +1389,164 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
             inst->op_vel_sens[op] = v;
             apply_patch_params(inst);
         }
+        else if (strcmp(param, "eg_l1") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_eg_l1[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "eg_l2") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_eg_l2[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "eg_l3") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_eg_l3[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "eg_l4") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_eg_l4[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "amp_mod") == 0) {
+            if (v < 0) v = 0;
+            if (v > 3) v = 3;
+            inst->op_amp_mod[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "osc_mode") == 0) {
+            if (v < 0) v = 0;
+            if (v > 1) v = 1;
+            inst->op_osc_mode[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "rate_scale") == 0) {
+            if (v < 0) v = 0;
+            if (v > 7) v = 7;
+            inst->op_rate_scale[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "key_bp") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_key_bp[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "key_ld") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_key_ld[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "key_rd") == 0) {
+            if (v < 0) v = 0;
+            if (v > 99) v = 99;
+            inst->op_key_rd[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "key_lc") == 0) {
+            if (v < 0) v = 0;
+            if (v > 3) v = 3;
+            inst->op_key_lc[op] = v;
+            apply_patch_params(inst);
+        }
+        else if (strcmp(param, "key_rc") == 0) {
+            if (v < 0) v = 0;
+            if (v > 3) v = 3;
+            inst->op_key_rc[op] = v;
+            apply_patch_params(inst);
+        }
+    }
+    /* Global DX7 parameters (non-operator) */
+    else if (strcmp(key, "osc_sync") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 1) v = 1;
+        inst->osc_sync = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "lfo_sync") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 1) v = 1;
+        inst->lfo_sync = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "lfo_pms") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 7) v = 7;
+        inst->lfo_pms = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "transpose") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 48) v = 48;
+        inst->transpose = v;
+        apply_patch_params(inst);
+    }
+    /* Pitch envelope parameters */
+    else if (strcmp(key, "pitch_eg_r1") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_r1 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_r2") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_r2 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_r3") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_r3 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_r4") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_r4 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_l1") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_l1 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_l2") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_l2 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_l3") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_l3 = v;
+        apply_patch_params(inst);
+    }
+    else if (strcmp(key, "pitch_eg_l4") == 0) {
+        int v = atoi(val);
+        if (v < 0) v = 0;
+        if (v > 99) v = 99;
+        inst->pitch_eg_l4 = v;
+        apply_patch_params(inst);
     }
 }
 
@@ -1252,6 +1685,80 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         else if (strcmp(param, "vel_sens") == 0) {
             return snprintf(buf, buf_len, "%d", inst->op_vel_sens[op]);
         }
+        else if (strcmp(param, "eg_l1") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_eg_l1[op]);
+        }
+        else if (strcmp(param, "eg_l2") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_eg_l2[op]);
+        }
+        else if (strcmp(param, "eg_l3") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_eg_l3[op]);
+        }
+        else if (strcmp(param, "eg_l4") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_eg_l4[op]);
+        }
+        else if (strcmp(param, "amp_mod") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_amp_mod[op]);
+        }
+        else if (strcmp(param, "osc_mode") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_osc_mode[op]);
+        }
+        else if (strcmp(param, "rate_scale") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_rate_scale[op]);
+        }
+        else if (strcmp(param, "key_bp") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_key_bp[op]);
+        }
+        else if (strcmp(param, "key_ld") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_key_ld[op]);
+        }
+        else if (strcmp(param, "key_rd") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_key_rd[op]);
+        }
+        else if (strcmp(param, "key_lc") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_key_lc[op]);
+        }
+        else if (strcmp(param, "key_rc") == 0) {
+            return snprintf(buf, buf_len, "%d", inst->op_key_rc[op]);
+        }
+    }
+    /* Global DX7 parameters (non-operator) */
+    if (strcmp(key, "osc_sync") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->osc_sync);
+    }
+    if (strcmp(key, "lfo_sync") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->lfo_sync);
+    }
+    if (strcmp(key, "lfo_pms") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->lfo_pms);
+    }
+    if (strcmp(key, "transpose") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->transpose);
+    }
+    /* Pitch envelope parameters */
+    if (strcmp(key, "pitch_eg_r1") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_r1);
+    }
+    if (strcmp(key, "pitch_eg_r2") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_r2);
+    }
+    if (strcmp(key, "pitch_eg_r3") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_r3);
+    }
+    if (strcmp(key, "pitch_eg_r4") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_r4);
+    }
+    if (strcmp(key, "pitch_eg_l1") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_l1);
+    }
+    if (strcmp(key, "pitch_eg_l2") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_l2);
+    }
+    if (strcmp(key, "pitch_eg_l3") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_l3);
+    }
+    if (strcmp(key, "pitch_eg_l4") == 0) {
+        return snprintf(buf, buf_len, "%d", inst->pitch_eg_l4);
     }
     /* UI hierarchy for shadow parameter editor */
     if (strcmp(key, "ui_hierarchy") == 0) {
@@ -1275,6 +1782,7 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                     "\"params\":["
                         "{\"level\":\"global\",\"label\":\"Global\"},"
                         "{\"level\":\"lfo\",\"label\":\"LFO\"},"
+                        "{\"level\":\"pitch_eg\",\"label\":\"Pitch EG\"},"
                         "{\"level\":\"operators\",\"label\":\"Operators\"},"
                         "{\"level\":\"banks\",\"label\":\"Choose Bank\"}"
                     "]"
@@ -1282,24 +1790,43 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                 "\"global\":{"
                     "\"label\":\"Global\","
                     "\"children\":null,"
-                    "\"knobs\":[\"output_level\",\"octave_transpose\",\"feedback\"],"
+                    "\"knobs\":[\"output_level\",\"octave_transpose\",\"algorithm\",\"feedback\"],"
                     "\"params\":["
                         "{\"key\":\"output_level\",\"label\":\"Output Level\"},"
                         "{\"key\":\"octave_transpose\",\"label\":\"Octave\"},"
                         "{\"key\":\"algorithm\",\"label\":\"Algorithm\"},"
-                        "{\"key\":\"feedback\",\"label\":\"Feedback\"}"
+                        "{\"key\":\"feedback\",\"label\":\"Feedback\"},"
+                        "{\"key\":\"osc_sync\",\"label\":\"Osc Sync\"},"
+                        "{\"key\":\"transpose\",\"label\":\"Transpose\"}"
                     "]"
                 "},"
                 "\"lfo\":{"
                     "\"label\":\"LFO\","
                     "\"children\":null,"
-                    "\"knobs\":[\"lfo_speed\",\"lfo_delay\",\"lfo_pmd\",\"lfo_amd\"],"
+                    "\"knobs\":[\"lfo_speed\",\"lfo_delay\",\"lfo_pmd\",\"lfo_amd\",\"lfo_pms\",\"lfo_wave\"],"
                     "\"params\":["
                         "{\"key\":\"lfo_speed\",\"label\":\"Speed\"},"
                         "{\"key\":\"lfo_delay\",\"label\":\"Delay\"},"
                         "{\"key\":\"lfo_pmd\",\"label\":\"Pitch Mod\"},"
                         "{\"key\":\"lfo_amd\",\"label\":\"Amp Mod\"},"
-                        "{\"key\":\"lfo_wave\",\"label\":\"Waveform\"}"
+                        "{\"key\":\"lfo_pms\",\"label\":\"Pitch Sens\"},"
+                        "{\"key\":\"lfo_wave\",\"label\":\"Waveform\"},"
+                        "{\"key\":\"lfo_sync\",\"label\":\"Key Sync\"}"
+                    "]"
+                "},"
+                "\"pitch_eg\":{"
+                    "\"label\":\"Pitch EG\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"pitch_eg_r1\",\"pitch_eg_r2\",\"pitch_eg_r3\",\"pitch_eg_r4\",\"pitch_eg_l1\",\"pitch_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"pitch_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"pitch_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"pitch_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"pitch_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"pitch_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"pitch_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"pitch_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"pitch_eg_l4\",\"label\":\"Level 4\"}"
                     "]"
                 "},"
                 "\"operators\":{"
@@ -1324,11 +1851,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op1_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op1_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op1_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op1_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op1_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op1_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op1_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op1_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op1_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op1_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op1_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op1_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op1_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op1_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op1_eg\":{"
+                    "\"label\":\"Op1 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op1_eg_r1\",\"op1_eg_r2\",\"op1_eg_r3\",\"op1_eg_r4\",\"op1_eg_l1\",\"op1_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op1_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op1_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op1_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op1_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op1_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op1_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op1_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op1_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op1_kbd\":{"
+                    "\"label\":\"Op1 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op1_key_bp\",\"op1_key_ld\",\"op1_key_rd\",\"op1_key_lc\",\"op1_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op1_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op1_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op1_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op1_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op1_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"op2\":{"
@@ -1340,11 +1895,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op2_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op2_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op2_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op2_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op2_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op2_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op2_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op2_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op2_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op2_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op2_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op2_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op2_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op2_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op2_eg\":{"
+                    "\"label\":\"Op2 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op2_eg_r1\",\"op2_eg_r2\",\"op2_eg_r3\",\"op2_eg_r4\",\"op2_eg_l1\",\"op2_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op2_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op2_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op2_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op2_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op2_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op2_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op2_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op2_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op2_kbd\":{"
+                    "\"label\":\"Op2 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op2_key_bp\",\"op2_key_ld\",\"op2_key_rd\",\"op2_key_lc\",\"op2_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op2_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op2_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op2_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op2_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op2_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"op3\":{"
@@ -1356,11 +1939,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op3_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op3_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op3_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op3_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op3_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op3_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op3_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op3_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op3_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op3_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op3_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op3_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op3_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op3_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op3_eg\":{"
+                    "\"label\":\"Op3 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op3_eg_r1\",\"op3_eg_r2\",\"op3_eg_r3\",\"op3_eg_r4\",\"op3_eg_l1\",\"op3_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op3_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op3_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op3_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op3_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op3_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op3_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op3_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op3_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op3_kbd\":{"
+                    "\"label\":\"Op3 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op3_key_bp\",\"op3_key_ld\",\"op3_key_rd\",\"op3_key_lc\",\"op3_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op3_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op3_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op3_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op3_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op3_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"op4\":{"
@@ -1372,11 +1983,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op4_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op4_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op4_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op4_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op4_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op4_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op4_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op4_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op4_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op4_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op4_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op4_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op4_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op4_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op4_eg\":{"
+                    "\"label\":\"Op4 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op4_eg_r1\",\"op4_eg_r2\",\"op4_eg_r3\",\"op4_eg_r4\",\"op4_eg_l1\",\"op4_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op4_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op4_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op4_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op4_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op4_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op4_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op4_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op4_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op4_kbd\":{"
+                    "\"label\":\"Op4 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op4_key_bp\",\"op4_key_ld\",\"op4_key_rd\",\"op4_key_lc\",\"op4_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op4_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op4_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op4_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op4_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op4_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"op5\":{"
@@ -1388,11 +2027,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op5_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op5_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op5_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op5_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op5_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op5_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op5_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op5_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op5_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op5_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op5_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op5_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op5_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op5_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op5_eg\":{"
+                    "\"label\":\"Op5 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op5_eg_r1\",\"op5_eg_r2\",\"op5_eg_r3\",\"op5_eg_r4\",\"op5_eg_l1\",\"op5_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op5_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op5_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op5_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op5_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op5_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op5_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op5_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op5_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op5_kbd\":{"
+                    "\"label\":\"Op5 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op5_key_bp\",\"op5_key_ld\",\"op5_key_rd\",\"op5_key_lc\",\"op5_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op5_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op5_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op5_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op5_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op5_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"op6\":{"
@@ -1404,11 +2071,39 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                         "{\"key\":\"op6_coarse\",\"label\":\"Coarse\"},"
                         "{\"key\":\"op6_fine\",\"label\":\"Fine\"},"
                         "{\"key\":\"op6_detune\",\"label\":\"Detune\"},"
-                        "{\"key\":\"op6_eg_r1\",\"label\":\"EG Attack\"},"
-                        "{\"key\":\"op6_eg_r2\",\"label\":\"EG Decay1\"},"
-                        "{\"key\":\"op6_eg_r3\",\"label\":\"EG Decay2\"},"
-                        "{\"key\":\"op6_eg_r4\",\"label\":\"EG Release\"},"
-                        "{\"key\":\"op6_vel_sens\",\"label\":\"Vel Sens\"}"
+                        "{\"key\":\"op6_osc_mode\",\"label\":\"Osc Mode\"},"
+                        "{\"level\":\"op6_eg\",\"label\":\"Envelope\"},"
+                        "{\"level\":\"op6_kbd\",\"label\":\"Kbd Scaling\"},"
+                        "{\"key\":\"op6_vel_sens\",\"label\":\"Vel Sens\"},"
+                        "{\"key\":\"op6_amp_mod\",\"label\":\"Amp Mod\"},"
+                        "{\"key\":\"op6_rate_scale\",\"label\":\"Rate Scale\"}"
+                    "]"
+                "},"
+                "\"op6_eg\":{"
+                    "\"label\":\"Op6 Envelope\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op6_eg_r1\",\"op6_eg_r2\",\"op6_eg_r3\",\"op6_eg_r4\",\"op6_eg_l1\",\"op6_eg_l2\"],"
+                    "\"params\":["
+                        "{\"key\":\"op6_eg_r1\",\"label\":\"Rate 1\"},"
+                        "{\"key\":\"op6_eg_r2\",\"label\":\"Rate 2\"},"
+                        "{\"key\":\"op6_eg_r3\",\"label\":\"Rate 3\"},"
+                        "{\"key\":\"op6_eg_r4\",\"label\":\"Rate 4\"},"
+                        "{\"key\":\"op6_eg_l1\",\"label\":\"Level 1\"},"
+                        "{\"key\":\"op6_eg_l2\",\"label\":\"Level 2\"},"
+                        "{\"key\":\"op6_eg_l3\",\"label\":\"Level 3\"},"
+                        "{\"key\":\"op6_eg_l4\",\"label\":\"Level 4\"}"
+                    "]"
+                "},"
+                "\"op6_kbd\":{"
+                    "\"label\":\"Op6 Kbd Scale\","
+                    "\"children\":null,"
+                    "\"knobs\":[\"op6_key_bp\",\"op6_key_ld\",\"op6_key_rd\",\"op6_key_lc\",\"op6_key_rc\"],"
+                    "\"params\":["
+                        "{\"key\":\"op6_key_bp\",\"label\":\"Break Point\"},"
+                        "{\"key\":\"op6_key_ld\",\"label\":\"Left Depth\"},"
+                        "{\"key\":\"op6_key_rd\",\"label\":\"Right Depth\"},"
+                        "{\"key\":\"op6_key_lc\",\"label\":\"Left Curve\"},"
+                        "{\"key\":\"op6_key_rc\",\"label\":\"Right Curve\"}"
                     "]"
                 "},"
                 "\"banks\":{"
@@ -1436,30 +2131,83 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
     if (strcmp(key, "octave_transpose") == 0) {
         return snprintf(buf, buf_len, "%d", inst->octave_transpose);
     }
-    /* Chain params metadata for shadow UI */
+    /* Chain params metadata for shadow UI - complete list of all editable parameters */
     if (strcmp(key, "chain_params") == 0) {
-        const char *params_json = "["
+        /* Build chain_params JSON dynamically to include all parameters */
+        int w = 0;
+        w += snprintf(buf + w, buf_len - w, "[");
+
+        /* Basic params */
+        w += snprintf(buf + w, buf_len - w,
             "{\"key\":\"preset\",\"name\":\"Preset\",\"type\":\"int\",\"min\":0,\"max\":31},"
             "{\"key\":\"output_level\",\"name\":\"Output\",\"type\":\"int\",\"min\":0,\"max\":100},"
-            "{\"key\":\"octave_transpose\",\"name\":\"Octave\",\"type\":\"int\",\"min\":-3,\"max\":3},"
+            "{\"key\":\"octave_transpose\",\"name\":\"Octave\",\"type\":\"int\",\"min\":-3,\"max\":3},");
+
+        /* Global params - using int for osc_sync since bool handling is uncertain */
+        w += snprintf(buf + w, buf_len - w,
             "{\"key\":\"algorithm\",\"name\":\"Algorithm\",\"type\":\"int\",\"min\":1,\"max\":32},"
             "{\"key\":\"feedback\",\"name\":\"Feedback\",\"type\":\"int\",\"min\":0,\"max\":7},"
+            "{\"key\":\"osc_sync\",\"name\":\"Osc Sync\",\"type\":\"int\",\"min\":0,\"max\":1},"
+            "{\"key\":\"transpose\",\"name\":\"Transpose\",\"type\":\"int\",\"min\":0,\"max\":48},");
+
+        /* LFO params - using int for lfo_wave since get_param returns integers */
+        w += snprintf(buf + w, buf_len - w,
             "{\"key\":\"lfo_speed\",\"name\":\"LFO Spd\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"lfo_delay\",\"name\":\"LFO Dly\",\"type\":\"int\",\"min\":0,\"max\":99},"
             "{\"key\":\"lfo_pmd\",\"name\":\"LFO PMD\",\"type\":\"int\",\"min\":0,\"max\":99},"
             "{\"key\":\"lfo_amd\",\"name\":\"LFO AMD\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op1_level\",\"name\":\"Op1 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op2_level\",\"name\":\"Op2 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op3_level\",\"name\":\"Op3 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op4_level\",\"name\":\"Op4 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op5_level\",\"name\":\"Op5 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
-            "{\"key\":\"op6_level\",\"name\":\"Op6 Lvl\",\"type\":\"int\",\"min\":0,\"max\":99}"
-        "]";
-        int len = strlen(params_json);
-        if (len < buf_len) {
-            strcpy(buf, params_json);
-            return len;
+            "{\"key\":\"lfo_pms\",\"name\":\"LFO PMS\",\"type\":\"int\",\"min\":0,\"max\":7},"
+            "{\"key\":\"lfo_wave\",\"name\":\"LFO Wave\",\"type\":\"int\",\"min\":0,\"max\":5},"
+            "{\"key\":\"lfo_sync\",\"name\":\"LFO Sync\",\"type\":\"int\",\"min\":0,\"max\":1},");
+
+        /* Pitch EG params */
+        w += snprintf(buf + w, buf_len - w,
+            "{\"key\":\"pitch_eg_r1\",\"name\":\"PEG R1\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_r2\",\"name\":\"PEG R2\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_r3\",\"name\":\"PEG R3\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_r4\",\"name\":\"PEG R4\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_l1\",\"name\":\"PEG L1\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_l2\",\"name\":\"PEG L2\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_l3\",\"name\":\"PEG L3\",\"type\":\"int\",\"min\":0,\"max\":99},"
+            "{\"key\":\"pitch_eg_l4\",\"name\":\"PEG L4\",\"type\":\"int\",\"min\":0,\"max\":99},");
+
+        /* Per-operator params for all 6 operators - all use int type for Shadow UI compatibility */
+        for (int op = 1; op <= 6; op++) {
+            w += snprintf(buf + w, buf_len - w,
+                "{\"key\":\"op%d_level\",\"name\":\"Op%d Lvl\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_coarse\",\"name\":\"Op%d Crs\",\"type\":\"int\",\"min\":0,\"max\":31},"
+                "{\"key\":\"op%d_fine\",\"name\":\"Op%d Fin\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_detune\",\"name\":\"Op%d Det\",\"type\":\"int\",\"min\":-7,\"max\":7},"
+                "{\"key\":\"op%d_osc_mode\",\"name\":\"Op%d Mode\",\"type\":\"int\",\"min\":0,\"max\":1},"
+                "{\"key\":\"op%d_vel_sens\",\"name\":\"Op%d Vel\",\"type\":\"int\",\"min\":0,\"max\":7},"
+                "{\"key\":\"op%d_amp_mod\",\"name\":\"Op%d AMS\",\"type\":\"int\",\"min\":0,\"max\":3},"
+                "{\"key\":\"op%d_rate_scale\",\"name\":\"Op%d RS\",\"type\":\"int\",\"min\":0,\"max\":7},",
+                op, op, op, op, op, op, op, op, op, op, op, op, op, op, op, op);
+
+            /* Operator EG */
+            w += snprintf(buf + w, buf_len - w,
+                "{\"key\":\"op%d_eg_r1\",\"name\":\"Op%d R1\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_r2\",\"name\":\"Op%d R2\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_r3\",\"name\":\"Op%d R3\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_r4\",\"name\":\"Op%d R4\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_l1\",\"name\":\"Op%d L1\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_l2\",\"name\":\"Op%d L2\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_l3\",\"name\":\"Op%d L3\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_eg_l4\",\"name\":\"Op%d L4\",\"type\":\"int\",\"min\":0,\"max\":99},",
+                op, op, op, op, op, op, op, op, op, op, op, op, op, op, op, op);
+
+            /* Operator kbd scaling - using int (0-3) instead of enum for Shadow UI compatibility */
+            w += snprintf(buf + w, buf_len - w,
+                "{\"key\":\"op%d_key_bp\",\"name\":\"Op%d BP\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_key_ld\",\"name\":\"Op%d LD\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_key_rd\",\"name\":\"Op%d RD\",\"type\":\"int\",\"min\":0,\"max\":99},"
+                "{\"key\":\"op%d_key_lc\",\"name\":\"Op%d LC\",\"type\":\"int\",\"min\":0,\"max\":3},"
+                "{\"key\":\"op%d_key_rc\",\"name\":\"Op%d RC\",\"type\":\"int\",\"min\":0,\"max\":3}%s",
+                op, op, op, op, op, op, op, op, op, op, op < 6 ? "," : "");
         }
-        return -1;
+
+        w += snprintf(buf + w, buf_len - w, "]");
+        return w;
     }
     /* State serialization for patch save/load */
     if (strcmp(key, "state") == 0) {
@@ -1472,17 +2220,28 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         int w = 0;
         w += snprintf(buf + w, buf_len - w,
             "{\"syx_bank_name\":\"%s\",\"syx_bank_index\":%d,\"preset\":%d,\"octave_transpose\":%d,\"output_level\":%d,"
-            "\"algorithm\":%d,\"feedback\":%d,\"lfo_speed\":%d,\"lfo_delay\":%d,\"lfo_pmd\":%d,\"lfo_amd\":%d,\"lfo_wave\":%d",
+            "\"algorithm\":%d,\"feedback\":%d,\"osc_sync\":%d,\"transpose\":%d,"
+            "\"lfo_speed\":%d,\"lfo_delay\":%d,\"lfo_pmd\":%d,\"lfo_amd\":%d,\"lfo_wave\":%d,\"lfo_sync\":%d,\"lfo_pms\":%d,"
+            "\"pitch_eg_r1\":%d,\"pitch_eg_r2\":%d,\"pitch_eg_r3\":%d,\"pitch_eg_r4\":%d,"
+            "\"pitch_eg_l1\":%d,\"pitch_eg_l2\":%d,\"pitch_eg_l3\":%d,\"pitch_eg_l4\":%d",
             bank_name, inst->syx_bank_index, inst->current_preset, inst->octave_transpose, inst->output_level,
-            inst->algorithm, inst->feedback, inst->lfo_speed, inst->lfo_delay, inst->lfo_pmd, inst->lfo_amd, inst->lfo_wave);
+            inst->algorithm, inst->feedback, inst->osc_sync, inst->transpose,
+            inst->lfo_speed, inst->lfo_delay, inst->lfo_pmd, inst->lfo_amd, inst->lfo_wave, inst->lfo_sync, inst->lfo_pms,
+            inst->pitch_eg_r1, inst->pitch_eg_r2, inst->pitch_eg_r3, inst->pitch_eg_r4,
+            inst->pitch_eg_l1, inst->pitch_eg_l2, inst->pitch_eg_l3, inst->pitch_eg_l4);
         /* Per-operator params */
         for (int op = 0; op < 6; op++) {
             w += snprintf(buf + w, buf_len - w,
                 ",\"op%d_level\":%d,\"op%d_coarse\":%d,\"op%d_fine\":%d,\"op%d_detune\":%d,"
-                "\"op%d_eg_r1\":%d,\"op%d_eg_r2\":%d,\"op%d_eg_r3\":%d,\"op%d_eg_r4\":%d,\"op%d_vel_sens\":%d",
+                "\"op%d_eg_r1\":%d,\"op%d_eg_r2\":%d,\"op%d_eg_r3\":%d,\"op%d_eg_r4\":%d,"
+                "\"op%d_eg_l1\":%d,\"op%d_eg_l2\":%d,\"op%d_eg_l3\":%d,\"op%d_eg_l4\":%d,"
+                "\"op%d_vel_sens\":%d,\"op%d_amp_mod\":%d,\"op%d_osc_mode\":%d,\"op%d_rate_scale\":%d,"
+                "\"op%d_key_bp\":%d,\"op%d_key_ld\":%d,\"op%d_key_rd\":%d,\"op%d_key_lc\":%d,\"op%d_key_rc\":%d",
                 op+1, inst->op_levels[op], op+1, inst->op_coarse[op], op+1, inst->op_fine[op], op+1, inst->op_detune[op],
                 op+1, inst->op_eg_r1[op], op+1, inst->op_eg_r2[op], op+1, inst->op_eg_r3[op], op+1, inst->op_eg_r4[op],
-                op+1, inst->op_vel_sens[op]);
+                op+1, inst->op_eg_l1[op], op+1, inst->op_eg_l2[op], op+1, inst->op_eg_l3[op], op+1, inst->op_eg_l4[op],
+                op+1, inst->op_vel_sens[op], op+1, inst->op_amp_mod[op], op+1, inst->op_osc_mode[op], op+1, inst->op_rate_scale[op],
+                op+1, inst->op_key_bp[op], op+1, inst->op_key_ld[op], op+1, inst->op_key_rd[op], op+1, inst->op_key_lc[op], op+1, inst->op_key_rc[op]);
         }
         w += snprintf(buf + w, buf_len - w, "}");
         return w;
