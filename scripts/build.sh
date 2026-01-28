@@ -72,6 +72,15 @@ cat src/ui.js > dist/dexed/ui.js
 cat build/dsp.so > dist/dexed/dsp.so
 chmod +x dist/dexed/dsp.so
 
+# Copy banks if they exist
+if [ -d "banks" ] && [ "$(ls -A banks/*.syx 2>/dev/null)" ]; then
+    echo "Including patch banks..."
+    mkdir -p dist/dexed/banks
+    for f in banks/*.syx; do
+        cat "$f" > "dist/dexed/banks/$(basename "$f")"
+    done
+fi
+
 # Create tarball for release
 cd dist
 tar -czvf dexed-module.tar.gz dexed/
