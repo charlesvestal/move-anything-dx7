@@ -894,6 +894,7 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
                 }
             } else if (data1 == 1) { /* Mod wheel */
                 inst->controllers.modwheel_cc = data2;
+                inst->controllers.refresh();  /* Update pitch_mod/amp_mod from new value */
             } else if (data1 == 123) { /* All notes off */
                 for (int i = 0; i < MAX_VOICES; i++) {
                     inst->voice_note[i] = -1;
@@ -901,6 +902,11 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
                 }
                 inst->active_voices = 0;
             }
+            break;
+
+        case 0xD0: /* Channel aftertouch */
+            inst->controllers.aftertouch_cc = data1;  /* Aftertouch value is in data1 */
+            inst->controllers.refresh();  /* Update pitch_mod/amp_mod from new value */
             break;
 
         case 0xE0: /* Pitch bend */
