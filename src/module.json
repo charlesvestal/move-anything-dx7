@@ -43,6 +43,14 @@
         "default": 0
       },
       {
+        "key": "algorithm",
+        "name": "Algorithm",
+        "type": "int",
+        "min": 1,
+        "max": 32,
+        "default": 1
+      },
+      {
         "key": "feedback",
         "name": "Feedback",
         "type": "int",
@@ -51,12 +59,36 @@
         "default": 0
       },
       {
+        "key": "osc_sync",
+        "name": "Osc Sync",
+        "type": "int",
+        "min": 0,
+        "max": 1,
+        "default": 0
+      },
+      {
+        "key": "transpose",
+        "name": "Transpose",
+        "type": "int",
+        "min": 0,
+        "max": 48,
+        "default": 24
+      },
+      {
         "key": "lfo_speed",
         "name": "LFO Spd",
         "type": "int",
         "min": 0,
         "max": 99,
         "default": 35
+      },
+      {
+        "key": "lfo_delay",
+        "name": "LFO Dly",
+        "type": "int",
+        "min": 0,
+        "max": 99,
+        "default": 0
       },
       {
         "key": "lfo_pmd",
@@ -72,6 +104,30 @@
         "type": "int",
         "min": 0,
         "max": 99,
+        "default": 0
+      },
+      {
+        "key": "lfo_pms",
+        "name": "LFO PMS",
+        "type": "int",
+        "min": 0,
+        "max": 7,
+        "default": 0
+      },
+      {
+        "key": "lfo_wave",
+        "name": "LFO Wave",
+        "type": "int",
+        "min": 0,
+        "max": 5,
+        "default": 0
+      },
+      {
+        "key": "lfo_sync",
+        "name": "LFO Sync",
+        "type": "int",
+        "min": 0,
+        "max": 1,
         "default": 0
       },
       {
