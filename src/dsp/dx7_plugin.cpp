@@ -1253,6 +1253,14 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         int v = atoi(val);
         if (v < -3) v = -3;
         if (v > 3) v = 3;
+        if (v != inst->octave_transpose) {
+            /* Release all notes to prevent hanging when transpose changes */
+            for (int i = 0; i < MAX_VOICES; i++) {
+                if (inst->voice_note[i] >= 0 && inst->voices[i]) {
+                    inst->voices[i]->keyup();
+                }
+            }
+        }
         inst->octave_transpose = v;
     } else if (strcmp(key, "output_level") == 0) {
         int v = atoi(val);
@@ -1494,6 +1502,14 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         int v = atoi(val);
         if (v < 0) v = 0;
         if (v > 48) v = 48;
+        if (v != inst->transpose) {
+            /* Release all notes to prevent hanging when transpose changes */
+            for (int i = 0; i < MAX_VOICES; i++) {
+                if (inst->voice_note[i] >= 0 && inst->voices[i]) {
+                    inst->voices[i]->keyup();
+                }
+            }
+        }
         inst->transpose = v;
         apply_patch_params(inst);
     }
