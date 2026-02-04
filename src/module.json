@@ -2,7 +2,7 @@
   "id": "dexed",
   "name": "Dexed",
   "abbrev": "DX",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "6-operator FM synthesizer (Dexed/MSFA) with .syx patch support",
   "author": "Dexed/MSFA by google/asb2m10 (port: charlesvestal)",
   "license": "GPL-3.0",
@@ -17,6 +17,15 @@
     "aftertouch": true,
     "chainable": true,
     "component_type": "sound_generator",
+    "ui_hierarchy": {
+      "levels": {
+        "root": {
+          "name": "Dexed",
+          "params": ["preset", "output_level", "octave_transpose", "algorithm", "feedback"],
+          "knobs": ["preset", "output_level", "octave_transpose", "algorithm", "feedback"]
+        }
+      }
+    },
     "chain_params": [
       {
         "key": "preset",
