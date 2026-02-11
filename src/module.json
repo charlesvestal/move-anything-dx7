@@ -189,6 +189,11 @@
       }
     ]
   },
+  "assets": {
+    "path": "banks",
+    "label": "Banks",
+    "extensions": [".syx"]
+  },
   "defaults": {
     "preset": 0
   }
