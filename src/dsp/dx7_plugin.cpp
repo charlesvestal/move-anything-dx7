@@ -1248,7 +1248,8 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
             v2_select_preset(inst, 0);
         }
     } else if (strcmp(key, "preset") == 0) {
-        v2_select_preset(inst, atoi(val));
+        int idx = atoi(val);
+        if (idx != inst->current_preset) v2_select_preset(inst, idx);
     } else if (strcmp(key, "octave_transpose") == 0) {
         int v = atoi(val);
         if (v < -3) v = -3;
