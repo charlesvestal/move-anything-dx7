@@ -200,7 +200,8 @@
     "extensions": [
       ".syx"
     ],
-    "optional": true
+    "optional": true,
+    "description": "Optionally upload additional .syx DX7 patch banks. 32 built-in factory patches are included."
   },
   "defaults": {
     "preset": 0
