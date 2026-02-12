@@ -183,177 +183,23 @@
               "default": 0
             }
           ],
-          "knobs": ["preset", "output_level", "octave_transpose", "algorithm", "feedback"]
+          "knobs": [
+            "preset",
+            "output_level",
+            "octave_transpose",
+            "algorithm",
+            "feedback"
+          ]
         }
       }
-    },
-    "chain_params": [
-      {
-        "key": "preset",
-        "name": "Preset",
-        "type": "int",
-        "min": 0,
-        "max": 31,
-        "default": 0
-      },
-      {
-        "key": "output_level",
-        "name": "Output",
-        "type": "int",
-        "min": 0,
-        "max": 100,
-        "default": 50
-      },
-      {
-        "key": "octave_transpose",
-        "name": "Octave",
-        "type": "int",
-        "min": -3,
-        "max": 3,
-        "default": 0
-      },
-      {
-        "key": "algorithm",
-        "name": "Algorithm",
-        "type": "int",
-        "min": 1,
-        "max": 32,
-        "default": 1
-      },
-      {
-        "key": "feedback",
-        "name": "Feedback",
-        "type": "int",
-        "min": 0,
-        "max": 7,
-        "default": 0
-      },
-      {
-        "key": "osc_sync",
-        "name": "Osc Sync",
-        "type": "int",
-        "min": 0,
-        "max": 1,
-        "default": 0
-      },
-      {
-        "key": "transpose",
-        "name": "Transpose",
-        "type": "int",
-        "min": 0,
-        "max": 48,
-        "default": 24
-      },
-      {
-        "key": "lfo_speed",
-        "name": "LFO Spd",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 35
-      },
-      {
-        "key": "lfo_delay",
-        "name": "LFO Dly",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "lfo_pmd",
-        "name": "LFO PMD",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "lfo_amd",
-        "name": "LFO AMD",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "lfo_pms",
-        "name": "LFO PMS",
-        "type": "int",
-        "min": 0,
-        "max": 7,
-        "default": 0
-      },
-      {
-        "key": "lfo_wave",
-        "name": "LFO Wave",
-        "type": "int",
-        "min": 0,
-        "max": 5,
-        "default": 0
-      },
-      {
-        "key": "lfo_sync",
-        "name": "LFO Sync",
-        "type": "int",
-        "min": 0,
-        "max": 1,
-        "default": 0
-      },
-      {
-        "key": "op1_level",
-        "name": "Op1 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "op2_level",
-        "name": "Op2 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "op3_level",
-        "name": "Op3 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "op4_level",
-        "name": "Op4 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "op5_level",
-        "name": "Op5 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      },
-      {
-        "key": "op6_level",
-        "name": "Op6 Lvl",
-        "type": "int",
-        "min": 0,
-        "max": 99,
-        "default": 0
-      }
-    ]
+    }
   },
   "assets": {
     "path": "banks",
     "label": "Banks",
-    "extensions": [".syx"],
+    "extensions": [
+      ".syx"
+    ],
     "optional": true
   },
   "defaults": {
