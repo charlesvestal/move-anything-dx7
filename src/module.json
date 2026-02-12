@@ -21,7 +21,168 @@
       "levels": {
         "root": {
           "name": "Dexed",
-          "params": ["preset", "output_level", "octave_transpose", "algorithm", "feedback"],
+          "params": [
+            {
+              "key": "preset",
+              "label": "Preset",
+              "type": "int",
+              "min": 0,
+              "max": 31,
+              "default": 0
+            },
+            {
+              "key": "output_level",
+              "label": "Output",
+              "type": "int",
+              "min": 0,
+              "max": 100,
+              "default": 50
+            },
+            {
+              "key": "octave_transpose",
+              "label": "Octave",
+              "type": "int",
+              "min": -3,
+              "max": 3,
+              "default": 0
+            },
+            {
+              "key": "algorithm",
+              "label": "Algorithm",
+              "type": "int",
+              "min": 1,
+              "max": 32,
+              "default": 1
+            },
+            {
+              "key": "feedback",
+              "label": "Feedback",
+              "type": "int",
+              "min": 0,
+              "max": 7,
+              "default": 0
+            },
+            {
+              "key": "osc_sync",
+              "label": "Osc Sync",
+              "type": "int",
+              "min": 0,
+              "max": 1,
+              "default": 0
+            },
+            {
+              "key": "transpose",
+              "label": "Transpose",
+              "type": "int",
+              "min": 0,
+              "max": 48,
+              "default": 24
+            },
+            {
+              "key": "lfo_speed",
+              "label": "LFO Spd",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 35
+            },
+            {
+              "key": "lfo_delay",
+              "label": "LFO Dly",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "lfo_pmd",
+              "label": "LFO PMD",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "lfo_amd",
+              "label": "LFO AMD",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "lfo_pms",
+              "label": "LFO PMS",
+              "type": "int",
+              "min": 0,
+              "max": 7,
+              "default": 0
+            },
+            {
+              "key": "lfo_wave",
+              "label": "LFO Wave",
+              "type": "int",
+              "min": 0,
+              "max": 5,
+              "default": 0
+            },
+            {
+              "key": "lfo_sync",
+              "label": "LFO Sync",
+              "type": "int",
+              "min": 0,
+              "max": 1,
+              "default": 0
+            },
+            {
+              "key": "op1_level",
+              "label": "Op1 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "op2_level",
+              "label": "Op2 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "op3_level",
+              "label": "Op3 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "op4_level",
+              "label": "Op4 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "op5_level",
+              "label": "Op5 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            },
+            {
+              "key": "op6_level",
+              "label": "Op6 Lvl",
+              "type": "int",
+              "min": 0,
+              "max": 99,
+              "default": 0
+            }
+          ],
           "knobs": ["preset", "output_level", "octave_transpose", "algorithm", "feedback"]
         }
       }
@@ -192,7 +353,8 @@
   "assets": {
     "path": "banks",
     "label": "Banks",
-    "extensions": [".syx"]
+    "extensions": [".syx"],
+    "optional": true
   },
   "defaults": {
     "preset": 0
