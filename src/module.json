@@ -2,7 +2,7 @@
   "id": "dexed",
   "name": "Dexed",
   "abbrev": "DX",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "6-operator FM synthesizer (Dexed/MSFA) with .syx patch support",
   "author": "Dexed/MSFA by google/asb2m10 (port: charlesvestal)",
   "license": "GPL-3.0",
