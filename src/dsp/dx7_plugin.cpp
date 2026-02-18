@@ -140,28 +140,29 @@ static void unpack_patch(const uint8_t *packed, uint8_t *unpacked) {
     unpacked[132] = packed[p + 6] & 0x7f;
     unpacked[133] = packed[p + 7] & 0x7f;
 
-    /* Algorithm & feedback */
+    /* Algorithm: byte 110, bits 0-4 */
     unpacked[134] = packed[p + 8] & 0x1f;
-    unpacked[135] = (packed[p + 8] >> 5) & 0x07;
-
-    /* Osc sync */
-    unpacked[136] = packed[p + 9] & 0x01;
+    /* Feedback: byte 111, bits 0-2 */
+    unpacked[135] = packed[p + 9] & 0x07;
+    /* Osc Key Sync: byte 111, bit 3 */
+    unpacked[136] = (packed[p + 9] >> 3) & 0x01;
 
     /* LFO */
     unpacked[137] = packed[p + 10] & 0x7f;  /* Speed */
     unpacked[138] = packed[p + 11] & 0x7f;  /* Delay */
     unpacked[139] = packed[p + 12] & 0x7f;  /* PMD */
     unpacked[140] = packed[p + 13] & 0x7f;  /* AMD */
-    unpacked[141] = (packed[p + 9] >> 1) & 0x01;   /* LFO sync */
-    unpacked[142] = packed[p + 14] & 0x07;         /* LFO wave (bits 0-2) */
-    unpacked[143] = (packed[p + 14] >> 4) & 0x07;  /* LFO PMS (bits 4-6) */
+    /* Byte 116: bit 0 = LFO sync, bits 1-3 = LFO wave, bits 4-6 = LFO PMS */
+    unpacked[141] = packed[p + 14] & 0x01;          /* LFO sync (bit 0) */
+    unpacked[142] = (packed[p + 14] >> 1) & 0x07;   /* LFO wave (bits 1-3) */
+    unpacked[143] = (packed[p + 14] >> 4) & 0x07;   /* LFO PMS (bits 4-6) */
 
     /* Transpose */
     unpacked[144] = packed[p + 15] & 0x7f;
 
     /* Name (10 chars) */
     for (int i = 0; i < 10; i++) {
-        unpacked[145 + i] = packed[p + 16 + i];
+        unpacked[145 + i] = packed[p + 16 + i] & 0x7f;
     }
 }
 
