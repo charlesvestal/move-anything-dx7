@@ -1,4 +1,4 @@
-# Dexed Module for Move Anything
+# Dexed Module for Move Everything
 
 Dexed FM synthesizer module for Ableton Move, using the MSFA engine from Dexed.
 
@@ -15,14 +15,14 @@ Dexed FM synthesizer module for Ableton Move, using the MSFA engine from Dexed.
 
 ## Prerequisites
 
-- [Move Anything](https://github.com/charlesvestal/move-anything) installed on your Ableton Move
+- [Move Everything](https://github.com/charlesvestal/move-anything) installed on your Ableton Move
 - SSH access enabled: http://move.local/development/ssh
 
 ## Installation
 
 ### Via Module Store (Recommended)
 
-1. Launch Move Anything on your Move
+1. Launch Move Everything on your Move
 2. Select **Module Store** from the main menu
 3. Navigate to **Sound Generators** → **Dexed**
 4. Select **Install**
@@ -44,7 +44,7 @@ Dexed scans the `banks/` folder in its module directory for .syx files on startu
    ```bash
    scp *.syx ableton@move.local:/data/UserData/move-anything/modules/sound_generators/dexed/banks/
    ```
-3. Restart Move Anything to load the new banks
+3. Restart Move Everything to load the new banks
 4. Use "Choose Bank" in the Shadow UI to switch between banks
 
 ### Patch File Format
@@ -102,7 +102,7 @@ In Shadow UI, parameters are organized into navigable categories:
 ### Operators
 - `op1_level` through `op6_level` (0-99) - Individual operator output levels
 
-These parameters modify the current patch in real-time. Changes are saved with your Move Anything patches.
+These parameters modify the current patch in real-time. Changes are saved with your Move Everything patches.
 
 ## Finding Patches
 
@@ -141,3 +141,10 @@ Requires Docker or ARM64 cross-compiler.
 
 - MSFA engine: Google (Apache 2.0)
 - Dexed: Pascal Gauthier / asb2m10
+
+## AI Assistance Disclaimer
+
+This module is part of Move Everything and was developed with AI assistance, including Claude, Codex, and other AI assistants.
+
+All architecture, implementation, and release decisions are reviewed by human maintainers.  
+AI-assisted content may still contain errors, so please validate functionality, security, and license compatibility before production use.
