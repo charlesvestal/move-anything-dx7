@@ -70,7 +70,7 @@ typedef struct plugin_api_v2 {
 #define DX7_PATCH_SIZE 156   /* Size of unpacked DX7 voice data */
 #define DX7_PACKED_SIZE 128  /* Size of packed DX7 voice in .syx */
 #define MAX_PATCHES 128
-#define MAX_SYX_BANKS 32
+#define MAX_SYX_BANKS 999
 
 /* Bank entry for .syx file browsing */
 typedef struct {
